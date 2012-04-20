@@ -8,7 +8,8 @@ config = {
   'packages': ['deployer'],
   'entry_points': {
     'console_scripts':[
-       'prereceiver=deployer.prereceiver:main'
+       'prereceiver=deployer.prereceiver:main',
+       'gitversion=deployer.gitversion:main'
     ]
   }
 }
