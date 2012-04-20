@@ -13,7 +13,6 @@ names for the integration and production branches can be specified as
 from subprocess import call, Popen, PIPE
 import re
 import datetime
-import time
 
 EMPTY_STRING = lambda value: value != ''
 STRING_STRIPPER = lambda value: value.strip()
