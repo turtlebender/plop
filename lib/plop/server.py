@@ -20,6 +20,10 @@ NO_SOCKET_GROUP = 'To use the ipc protocol you must specify a socket group'
 
 class PlopServer(object):
 
+    """
+    Server to handle updates from the git listeners as well as provision
+    requests.
+    """
     def __init__(self, config):
         try:
             self.bucket = config['s3_bucket']
@@ -38,13 +42,14 @@ class PlopServer(object):
             self.sock = CONTEXT.socket(zmq.PULL)
             self.sock.bind(self.server_socket)
         except ZMQError as zmqerror:
-            message = 'Unable to initialize zeromq: {0}'.format(zmqerror.message)
+            message = zmqerror.message
+            message = 'Unable to initialize zeromq: {0}'.format(message)
             raise AssertionError(message)
         if 'aws_access_key_id' in config and 'aws_secret_access_key' in config:
             self.s3_conn = boto.connect_s3(config['aws_access_key_id'],
                     config['aws_secret_access_key'])
         else:
-            self.s3_conn = boto.connect_s3
+            self.s3_conn = boto.connect_s3()
 
 
     def serve(self):
@@ -84,6 +89,9 @@ class PlopServer(object):
             key.set_contents_from_string(basename(path))
 
     def do_serve(self, sock):
+        """
+        The actual server logic
+        """
         message = sock.recv_json()
         while message:
             tar_file = '{0}-{1}.tar.gz'.format(message['project'],
@@ -94,6 +102,9 @@ class PlopServer(object):
             message = sock.recv()
 
 def main():
+    """
+    Execute as a standalone program
+    """
     from clint.textui import colored
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(msg)s")
     try:
