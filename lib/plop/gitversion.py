@@ -80,7 +80,7 @@ def fetch():
     call('git fetch', shell=True)
 
 
-def get_version(integration='integration', production='production'):
+def get_version(branch_name=None, integration='integration', production='production'):
     """
     Construct the version for a project based on the current git status.
     This assumes that the branch names follow a convention where there is
@@ -90,25 +90,27 @@ def get_version(integration='integration', production='production'):
     names for the integration and production branches can be specified as
     arguments to this function.
     """
-    branch_cmd = Popen('git branch', stdout=PIPE, shell=True)
-    current_branch_proc = Popen('grep -e ^*', stdin=branch_cmd.stdout, 
-            stdout=PIPE, shell=True)
-    branch_cmd.stdout.close()
-    branch_name = current_branch_proc.communicate()[0]
-    feature_branch = re.match('^.*JIRA-(\w+)-(.*)', branch_name)
+    name = branch_name
+    if name is None:
+        branch_cmd = Popen('git branch', stdout=PIPE, shell=True)
+        current_branch_proc = Popen('grep -e ^*', stdin=branch_cmd.stdout, 
+                stdout=PIPE, shell=True)
+        branch_cmd.stdout.close()
+        name = current_branch_proc.communicate()[0]
+    feature_branch = re.match('^.*JIRA-(\w+)-(.*)', name)
     if feature_branch is not None:
         return "{0}.{1}".format(feature_branch.group(2),
                 feature_branch.group(1))
 
-    if re.match('^.*{0}$'.format(integration), branch_name) is not None:
+    if re.match('^.*{0}$'.format(integration), name) is not None:
         return get_integration_version()
 
-    release_branch = re.match('^.*(RELEASE-)(.*)', branch_name)
+    release_branch = re.match('^.*(RELEASE-)(.*)', name)
     if release_branch is not None:
         return get_beta_version(release_branch.group(1), 
                 release_branch.group(2))
 
-    if re.match('.*{0}$'.format(production), branch_name) is None:
+    if re.match('.*{0}$'.format(production), name) is None:
         raise ValueError('What the hell branch are you on?')
 
     log_proc = Popen('git log --oneline -n 5', stdout=PIPE, shell=True)

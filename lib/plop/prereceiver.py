@@ -27,7 +27,7 @@ def working_dir(directory):
         os.chdir(curdir)
 
 
-def build(project_name, newrev, socket_addr, pip_mirror):
+def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
     base_dir = tempfile.mkdtemp()
     app_dir_name = os.path.join(base_dir, 'app')
     os.mkdir(app_dir_name)
@@ -46,7 +46,7 @@ def build(project_name, newrev, socket_addr, pip_mirror):
             subprocess.check_call(pip_install, shell=True)
         relocatable_venv = RELOCATABLE_VENV_CMD.format(virtualenv_dir)
         subprocess.check_call(relocatable_venv, shell=True)
-        version = gitversion.get_version()
+        version = gitversion.get_version(branch_name=ref_name)
         tar = TAR_CMD.format(project_name, version, 
                 virtualenv_parent, project_name)
         subprocess.check_call(tar, shell=True)
@@ -66,7 +66,7 @@ def main():
     env = os.environ
     pip_mirror = env['PIP_MIRROR'] if 'PIP_MIRROR' in env else DEF_MIRROR
     socket = env['BUILD_SOCKET'] if 'BUILD_SOCKET' in env else DEF_SOCKET
-    build(project_name, new, socket, pip_mirror)
+    build(project_name, new, ref.split('/')[-1], socket, pip_mirror)
 
 if __name__ == '__main__':
     main()
