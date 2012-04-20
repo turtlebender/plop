@@ -42,11 +42,12 @@ def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
         subprocess.check_call(GIT_ARCHIVE_CMD.format(newrev,
             archive_dir_name), shell=True)
         with working_dir(archive_dir_name):
-            pip_install = PIP_INSTALL_CMD.format(os.path.abspath(virtualenv_dir), pip_mirror)
-            subprocess.check_call(pip_install, shell=True)
+            install = PIP_INSTALL_CMD.format(os.path.abspath(virtualenv_dir),
+                    pip_mirror)
+            subprocess.check_call(install, shell=True)
         relocatable_venv = RELOCATABLE_VENV_CMD.format(virtualenv_dir)
         subprocess.check_call(relocatable_venv, shell=True)
-        version = gitversion.get_version(branch_name=ref_name, rev=newrev)
+        version = gitversion.get_version(ref_name=ref_name, rev=newrev)
         tar = TAR_CMD.format(project_name, version, 
                 virtualenv_parent, project_name)
         subprocess.check_call(tar, shell=True)
