@@ -20,7 +20,10 @@ def serve():
     do_serve(sock)
 
 def upload(path, bucket='plop'):
-    bucket = S3_CONN.get_bucket(bucket)
+    try:
+        bucket = S3_CONN.get_bucket(bucket)
+    except boto.exception.S3ResponseError:
+        bucket = S3_CONN.create_bucket(bucket)
     key = Key(bucket)
     key.key = basename(path)
     key.set_contents_from_filename(path)
