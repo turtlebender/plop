@@ -12,6 +12,7 @@ from plop import gitversion
 CREATE_VIRTUALENV_CMD = 'virtualenv --distribute {0}'
 GIT_ARCHIVE_CMD = 'git archive {0} | tar -x -C {1}'
 PIP_INSTALL_CMD = '{0}/bin/pip install -i {1} --no-deps -r requirements.txt'
+INSTALL_CMD = '{0}/bin/python setup.py install'
 RELOCATABLE_VENV_CMD = 'virtualenv --relocatable {0}'
 TAR_CMD = 'tar -czvf /tmp/{0}-{1}.tar.gz -C {2} {3}'
 DEF_MIRROR = 'http://pypi.utils.globuscs.info/simple'
@@ -34,19 +35,26 @@ def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
     archive_dir_name = os.path.join(app_dir_name, project_name)
     os.mkdir(archive_dir_name)
     virtualenv_parent = tempfile.mkdtemp()
-    virtualenv_dir = os.path.join(virtualenv_parent, project_name)
+    virtualenv_dir = os.path.abspath(os.path.join(virtualenv_parent,
+        project_name))
     os.mkdir(virtualenv_dir)
+    dummy_clone = tempfile.mkdtemp()
     try:
         subprocess.check_call(CREATE_VIRTUALENV_CMD.format(virtualenv_dir),
             shell=True)
-        subprocess.check_call(GIT_ARCHIVE_CMD.format(newrev,
-            archive_dir_name), shell=True)
-        with working_dir(archive_dir_name):
-            pip_install = PIP_INSTALL_CMD.format(os.path.abspath(virtualenv_dir), pip_mirror)
+        # Clone repository, checkout current reference, and build
+        with working_dir(dummy_clone):
+            subprocess.check_call('git clone {0}'.format(os.getcwd()), 
+                    shell=True)
+            subprocess.check_call('git checkout -b {0} {1}'.format(ref_name,
+                newrev), shell=True)
+            version = gitversion.get_version(branch_name=ref_name)
+            pip_install = PIP_INSTALL_CMD.format(virtualenv_dir, pip_mirror)
             subprocess.check_call(pip_install, shell=True)
+            subprocess.check_call(INSTALL_CMD.format(virtualenv_dir), 
+                    shell=True)
         relocatable_venv = RELOCATABLE_VENV_CMD.format(virtualenv_dir)
         subprocess.check_call(relocatable_venv, shell=True)
-        version = gitversion.get_version(branch_name=ref_name)
         tar = TAR_CMD.format(project_name, version, 
                 virtualenv_parent, project_name)
         subprocess.check_call(tar, shell=True)
@@ -56,6 +64,7 @@ def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
         sock.send_json(dict(project=project_name, version=version))
 
     finally:
+        shutil.rmtree(dummy_clone)
         shutil.rmtree(base_dir)
         shutil.rmtree(virtualenv_dir)
 
