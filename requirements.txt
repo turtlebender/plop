@@ -1,4 +1,6 @@
 boto==2.3.0
 clint==0.3.1
 distribute==0.6.24
+gevent==0.13.7
+greenlet==0.3.4
 pyzmq-static==2.1.7.1

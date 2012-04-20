@@ -1,7 +1,11 @@
-import zmq
+from gevent import spawn
+from gevent_zeromq import zmq
 import os
-import shutil
+import boto
+from boto.s3.key import Key
+from os.path import basename
 
+S3_CONN = boto.connect_s3()
 CONTEXT = zmq.Context()
 
 def serve():
@@ -13,14 +17,24 @@ def serve():
     sock.bind("ipc:///git/tmp/build_complete")
     os.chown('/git/tmp/build_complete', -1, 1001)
     os.chmod('/git/tmp/build_complete', 0660)
+    do_serve(sock)
+
+def upload(path, bucket='plop'):
+    bucket = S3_CONN.get_bucket(bucket)
+    key = Key(bucket)
+    key.key = basename(path)
+    key.set_contents_from_filename(path)
+    key = Key(bucket)
+    key.key = 'current'
+    key.set_contents(basename(path))
+
+def do_serve(sock):
     message = sock.recv_json()
-    print message
     while message:
         tar_file = '{0}-{1}.tar.gz'.format(message['project'],
                 message['version'])
         template = '/git/tmp/{0}'
-        shutil.copyfile(template.format(tar_file),
-                os.path.expanduser('~/{0}'.format(tar_file)))
+        spawn(upload, template.format(tar_file))
         message = sock.recv()
 
 if __name__ == '__main__':
