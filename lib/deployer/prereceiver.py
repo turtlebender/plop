@@ -29,19 +29,23 @@ def working_dir(directory):
 def build(project_name, newrev, socket_addr, pip_mirror):
     base_dir = tempfile.mkdtemp()
     app_dir_name = os.path.join(base_dir, 'app')
+    os.mkdir(app_dir_name)
     archive_dir_name = os.path.join(app_dir_name, project_name)
-    virtualenv_dir = os.path.join(archive_dir_name, '.venv')
+    os.mkdir(archive_dir_name)
+    virtualenv_parent = tempfile.mkdtemp()
+    virtualenv_dir = os.path.join(virtualenv_parent, project_name)
+    os.mkdir(virtualenv_dir)
     try:
-        subprocess.check_call(CREATE_VIRTUALENV_CMD.format(virtualenv_dir,
-            shell=True))
+        subprocess.check_call(CREATE_VIRTUALENV_CMD.format(virtualenv_dir),
+            shell=True)
         subprocess.check_call(GIT_ARCHIVE_CMD.format(newrev,
             archive_dir_name), shell=True)
         with working_dir(archive_dir_name):
-            pip_install = PIP_INSTALL_CMD.format(virtualenv_dir, pip_mirror)
+            pip_install = PIP_INSTALL_CMD.format(os.path.abspath(virtualenv_dir), pip_mirror)
             subprocess.check_call(pip_install, shell=True)
         relocatable_venv = RELOCATABLE_VENV_CMD.format(virtualenv_dir)
         subprocess.check_call(relocatable_venv, shell=True)
-        tar = TAR_CMD.format(project_name, base_dir, 'app')
+        tar = TAR_CMD.format(project_name, virtualenv_parent, project_name)
         subprocess.check_call(tar, shell=True)
         context = zmq.Context()
         sock = context.socket(zmq.PUSH)
@@ -50,6 +54,7 @@ def build(project_name, newrev, socket_addr, pip_mirror):
 
     finally:
         shutil.rmtree(base_dir)
+        shutil.rmtree(virtualenv_dir)
 
 def main():
     line = piped_in()
@@ -58,7 +63,7 @@ def main():
     env = os.environ
     pip_mirror = env['PIP_MIRROR'] if 'PIP_MIRROR' in env else DEF_MIRROR
     socket = env['BUILD_SOCKET'] if 'BUILD_SOCKET' in env else DEF_SOCKET
-    build(project_name, new, pip_mirror, socket)
+    build(project_name, new, socket, pip_mirror)
 
 if __name__ == '__main__':
     main()
