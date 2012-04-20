@@ -7,6 +7,7 @@ import boto
 from boto.s3.key import Key
 import gevent
 from gevent_zeromq import zmq
+from plop import EVENT_TYPE_KEY, BUILD_COMPLETE_VALUE
 from zmq.core.error import ZMQError
 
 CONTEXT = zmq.Context()
@@ -98,7 +99,8 @@ class PlopServer(object):
                     message['version'])
             template = '/git/tmp/{0}'
             LOG.debug('Received message')
-            gevent.spawn(self.upload, template.format(tar_file))
+            if message[EVENT_TYPE_KEY] == BUILD_COMPLETE_VALUE:
+                gevent.spawn(self.upload, template.format(tar_file))
             message = sock.recv()
 
 def main():

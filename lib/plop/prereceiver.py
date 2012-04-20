@@ -7,7 +7,7 @@ import tempfile
 from clint import piped_in
 import contextlib
 import zmq
-from plop import gitversion
+from plop import gitversion, EVENT_TYPE_KEY. BUILD_COMPLETE_VALUE
 
 CREATE_VIRTUALENV_CMD = 'virtualenv --distribute {0}'
 GIT_ARCHIVE_CMD = 'git archive {0} | tar -x -C {1}'
@@ -54,7 +54,8 @@ def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
         context = zmq.Context()
         sock = context.socket(zmq.PUSH)
         sock.connect(socket_addr)
-        sock.send_json(dict(project=project_name, version=version))
+        sock.send_json({EVENT_TYPE_KEY=BUILD_COMPLETE_VALUE,
+            'project':'project_name', 'version':'version'})
 
     finally:
         shutil.rmtree(base_dir)
