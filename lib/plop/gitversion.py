@@ -29,7 +29,7 @@ def format_version(raw_version):
     parts[2] = parts[2][-1] if parts[2][0] == '0' else parts[2]
     return '.'.join([parts[0][-1], parts[1], parts[2]])
 
-def get_integration_version():
+def get_integration_version(rev):
     """
     Construct the version for an integration release.  The format is:
     Y.[m]m.[d]d-dev.{s} where the year, month and day are derived from the
@@ -49,7 +49,7 @@ def get_integration_version():
         version = format_version(next_release_date.strftime('%Y-%m-%d'))
     except IndexError:
         version = '0.0.1'
-    log_message = Popen('git log -1 --date=raw', stdout=PIPE,
+    log_message = Popen('git show --date=raw {0}'.format(rev), stdout=PIPE,
             shell=True).communicate()[0]
     snapshot = re.search(r""".*\n.*\nDate:.*?(\d+) .*\n.*""",
             log_message).group(1)
@@ -80,7 +80,8 @@ def fetch():
     call('git fetch', shell=True)
 
 
-def get_version(branch_name=None, integration='integration', production='production'):
+def get_version(ref_name=None, rev=None, integration='integration', 
+        production='production'):
     """
     Construct the version for a project based on the current git status.
     This assumes that the branch names follow a convention where there is
@@ -90,20 +91,25 @@ def get_version(branch_name=None, integration='integration', production='product
     names for the integration and production branches can be specified as
     arguments to this function.
     """
-    name = branch_name
+    name = ref_name
     if name is None:
         branch_cmd = Popen('git branch', stdout=PIPE, shell=True)
         current_branch_proc = Popen('grep -e ^*', stdin=branch_cmd.stdout, 
                 stdout=PIPE, shell=True)
         branch_cmd.stdout.close()
         name = current_branch_proc.communicate()[0]
+    current_revision = rev
+    if current_revision is None:
+        current_revision = Popen('git rev-parse {0}'.format(ref_name),
+                stdout=PIPE, shell=True).communicate()[0]
+
     feature_branch = re.match('^.*JIRA-(\w+)-(.*)', name)
     if feature_branch is not None:
         return "{0}.{1}".format(feature_branch.group(2),
                 feature_branch.group(1))
 
     if re.match('^.*{0}$'.format(integration), name) is not None:
-        return get_integration_version()
+        return get_integration_version(current_revision)
 
     release_branch = re.match('^.*(RELEASE-)(.*)', name)
     if release_branch is not None:
