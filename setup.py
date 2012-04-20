@@ -5,11 +5,11 @@ config = {
   'version':'0.0.1',
   'name':'deployer',
   'package_dir': {'':'lib'},
-  'packages': ['deployer'],
+  'packages': ['plop'],
   'entry_points': {
     'console_scripts':[
-       'prereceiver=deployer.prereceiver:main',
-       'gitversion=deployer.gitversion:main'
+       'prereceiver=plop.prereceiver:main',
+       'gitversion=plop.gitversion:main'
     ]
   }
 }
