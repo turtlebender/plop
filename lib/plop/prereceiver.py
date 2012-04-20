@@ -42,9 +42,10 @@ def build(project_name, newrev, ref_name, socket_addr, pip_mirror):
     try:
         subprocess.check_call(CREATE_VIRTUALENV_CMD.format(virtualenv_dir),
             shell=True)
+        repo_dir = os.getcwd()
         # Clone repository, checkout current reference, and build
         with working_dir(dummy_clone):
-            subprocess.check_call('git clone {0}'.format(os.getcwd()), 
+            subprocess.check_call('git clone {0}'.format(repo_dir), 
                     shell=True)
             subprocess.check_call('git checkout -b {0} {1}'.format(ref_name,
                 newrev), shell=True)
