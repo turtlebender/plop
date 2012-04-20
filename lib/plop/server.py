@@ -3,10 +3,11 @@ import os
 from os.path import basename
 import re
 
-import gevent
-from gevent_zeromq import zmq
 import boto
 from boto.s3.key import Key
+import gevent
+from gevent_zeromq import zmq
+from zmq.core.error import ZMQError
 
 CONTEXT = zmq.Context()
 
@@ -33,7 +34,12 @@ class PlopServer(object):
                 self.socket_group = config['socket_group']
             except IndexError:
                 raise AssertionError(NO_SOCKET_GROUP)
-
+        try:
+            self.sock = CONTEXT.socket(zmq.PULL)
+            self.sock.bind(self.server_socket)
+        except ZMQError as zmqerror:
+            message = 'Unable to initialize zeromq: {0}'.format(zmqerror.message)
+            raise AssertionError(message)
         if 'aws_access_key_id' in config and 'aws_secret_access_key' in config:
             self.s3_conn = boto.connect_s3(config['aws_access_key_id'],
                     config['aws_secret_access_key'])
@@ -47,8 +53,6 @@ class PlopServer(object):
         handlers.
         """
         LOG.info("Starting up server")
-        sock = CONTEXT.socket(zmq.PULL)
-        sock.bind(self.server_socket)
 
         if 'ipc://' in self.server_socket:
             path = re.match('ipc\:\/\/(.*)', self.server_socket).group(1)
@@ -56,7 +60,7 @@ class PlopServer(object):
             os.chmod(path, 0660)
 
         try:
-            self.do_serve(sock)
+            self.do_serve(self.sock)
         except KeyboardInterrupt:
             LOG.info("Shutting down . ..")
 
@@ -95,7 +99,7 @@ def main():
     try:
         server = PlopServer({
             's3_bucket':'go_plop',
-            'server_socket':'/git/tmp/build_complete',
+            'server_socket':'ipc:///git/tmp/build_complete',
             'socket_group':1001
             })
     except AssertionError as error:
