@@ -77,7 +77,7 @@ class PlopServer(object):
             bucket = self.s3_conn.get_bucket(self.bucket)
         except boto.exception.S3ResponseError:
             LOG.warn('Creating Bucket')
-            bucket = self.s3_conn.create_bucket(bucket)
+            bucket = self.s3_conn.create_bucket(self.bucket)
         key = Key(bucket)
         key.key = basename(path)
         LOG.info('Storing slug: {0}'.format(path))

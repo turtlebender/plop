@@ -65,15 +65,17 @@ class ElbHelper(object):
                 puts(load_balancer.name)
                 with indent(4):
                     puts(load_balancer.dns_name)
-        
-
-def main(operation, args):
+def route(operation, args):
     helper = ElbHelper()
     if hasattr(helper, operation):
         getattr(helper, operation)(*args)
+
+
+def main():
+    route(args.all[0], args.all[1:])
 
 def usage():
     print(colored.red("This will be usage"))
 
 if __name__ == '__main__':
-    main(args.all[0], args.all[1:])
+    main()
