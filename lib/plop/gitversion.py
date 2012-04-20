@@ -68,10 +68,10 @@ def get_beta_version(release_name, date_string):
     commit_counter = Popen('wc -l', stdin=log_proc.stdout, 
             stdout=PIPE, shell=True)
     log_proc.stdout.close()
-    beta_version = "-{0}".format(commit_counter.communicate()[0].strip())
-    if beta_version == '-0':
+    beta_version = ".{0}".format(commit_counter.communicate()[0].strip())
+    if beta_version == '.0':
         beta_version = ''
-    return "{0}-beta.{1}".format(format_version(date_string), beta_version)
+    return "{0}-beta{1}".format(format_version(date_string), beta_version)
 
 def fetch():
     """
