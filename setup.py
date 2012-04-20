@@ -10,7 +10,7 @@ CONFIG = {
     'console_scripts':[
        'prereceiver=plop.prereceiver:main',
        'gitversion=plop.gitversion:main',
-       'plop-server=plop.server:serve'
+       'plop-server=plop.server:main'
     ]
   }
 }
