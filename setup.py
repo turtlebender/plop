@@ -1,17 +1,18 @@
-from setuptools import setup,find_packages
+from setuptools import setup
 
-config = {
+CONFIG = {
   'description':'git deployment tools',
   'version':'0.0.1',
-  'name':'deployer',
+  'name':'plop',
   'package_dir': {'':'lib'},
   'packages': ['plop'],
   'entry_points': {
     'console_scripts':[
        'prereceiver=plop.prereceiver:main',
-       'gitversion=plop.gitversion:main'
+       'gitversion=plop.gitversion:main',
+       'plop-server=plop.server:serve'
     ]
   }
 }
 
-setup(**config)
+setup(**CONFIG)
