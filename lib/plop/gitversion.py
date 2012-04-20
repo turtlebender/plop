@@ -97,10 +97,11 @@ def get_version(ref_name=None, rev=None, integration='integration',
         current_branch_proc = Popen('grep -e ^*', stdin=branch_cmd.stdout, 
                 stdout=PIPE, shell=True)
         branch_cmd.stdout.close()
-        name = current_branch_proc.communicate()[0]
+        name = re.match('\* (.*)',
+                current_branch_proc.communicate()[0]).group(1)
     current_revision = rev
     if current_revision is None:
-        current_revision = Popen('git rev-parse {0}'.format(ref_name),
+        current_revision = Popen('git rev-parse refs/heads/{0}'.format(name),
                 stdout=PIPE, shell=True).communicate()[0]
 
     feature_branch = re.match('^.*JIRA-(\w+)-(.*)', name)
