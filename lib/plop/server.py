@@ -8,6 +8,7 @@ from boto.s3.key import Key
 import gevent
 from gevent_zeromq import zmq
 from plop import EVENT_TYPE_KEY, BUILD_COMPLETE_VALUE
+from plop.ec2 import ElbHelper
 from zmq.core.error import ZMQError
 
 CONTEXT = zmq.Context()
@@ -49,9 +50,11 @@ class PlopServer(object):
         if 'aws_access_key_id' in config and 'aws_secret_access_key' in config:
             self.s3_conn = boto.connect_s3(config['aws_access_key_id'],
                     config['aws_secret_access_key'])
+            self.elbheper = ElbHelper(config['aws_access_key_id'],
+                config['aws_secret_access_key'])
         else:
             self.s3_conn = boto.connect_s3()
-
+            self.elbhelper = ElbHelper()
 
     def serve(self):
         """
